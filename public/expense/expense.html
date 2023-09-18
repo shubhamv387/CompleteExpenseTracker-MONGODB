@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Expense</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+
+    <style>
+      .profileShow {
+        opacity: 100% !important;
+        transform: translateY(58%) !important;
+      }
+      /* Scroll Bar Start */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 0.5rem;
+        background-color: #041a00;
+        border: 1px solid transparent;
+        background-clip: content-box;
+      }
+
+      ::-webkit-scrollbar-track {
+        background-color: #ffffff !important;
+      }
+      /* Scroll Bar End */
+    </style>
+  </head>
+  <body>
+    <!-- HEADER START -->
+    <div class="container-fluid bg-dark d-flex justify-content-center">
+      <div
+        class="col d-flex p-2 justify-content-between align-items-center"
+        style="max-width: 650px"
+      >
+        <h1 class="d-inline p-2 fs-2 bg-dark text-white">
+          <a class="text-white text-decoration-none" href="./expense.html"
+            >Expense Tracker</a
+          >
+        </h1>
+        <div class="col d-flex position-relative">
+          <i
+            id="profilePic"
+            class="fa-solid fa-user-large d-inline ms-auto fs-5 text-white rounded-circle border border-3 bg-dark border-white p-2"
+            style="cursor: pointer"
+          ></i>
+          <div
+            id="welcomeDiv"
+            class="col d-flex form-control flex-column position-absolute bg-light shadow"
+            style="
+              width: 200px;
+              right: 0;
+              z-index: 999;
+              transform: translateY(-120px);
+              opacity: 0;
+              overflow: hidden;
+              transition: 0.3s;
+            "
+          >
+            <p id="welcomeText" class="mb-2">Hello, User</p>
+            <button class="btn btn-danger w-100" id="logout">Log Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- HEADER START -->
+
+    <div class="position-relative d-flex flex-column justify-content-center">
+      <!-- EXPENSE-FORM START -->
+      <div class="container d-flex p-4 pb-0" style="max-width: 650px">
+        <div class="form-control pt-2 px-4 pb-4" style="background: #f2f2f2">
+          <form id="form-submit">
+            <label class="form-label mt-2 mb-1" for="email">Amount:</label>
+            <input
+              required
+              class="form-control"
+              type="amount"
+              name="amount"
+              id="amount"
+            />
+            <label class="form-label mt-2 mb-1" for="description"
+              >Description:</label
+            >
+            <input
+              required
+              class="form-control"
+              type="description"
+              name="description"
+              id="description"
+            />
+            <label class="form-label mt-2 mb-1" for="password">Category:</label>
+            <select
+              class="form-select w-100"
+              name="category"
+              id="category"
+              required
+            >
+              <option disabled selected value="">Select One</option>
+              <option value="Fuel">Fuel</option>
+              <option value="Food">Food</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Movie">Movie</option>
+            </select>
+
+            <input
+              id="submitBtn"
+              name="submit"
+              type="submit"
+              value="ADD EXPENSE"
+              class="btn btn-success w-100 mt-3 text-uppercase"
+            />
+            <input
+              class="btn btn-dark w-100 mt-3 text-uppercase"
+              type="button"
+              name="update"
+              id="updateBtn"
+              value="update"
+              style="display: none"
+            />
+          </form>
+        </div>
+      </div>
+      <!-- EXPENSE-FORM END -->
+
+      <!-- IS PREMIUM USER START -->
+      <div
+        class="container d-flex flex-column align-items-center"
+        style="max-width: 630px; width: 96%"
+      >
+        <button
+          id="getpremium"
+          class="btn btn-warning mt-4 align-self-center"
+          style="display: none"
+        >
+          Get Premium
+        </button>
+        <span
+          id="premiumUser"
+          class="text-white d-flex justify-content-around align-items-center text-center form-control mt-4 text-capitalize w-100 bg-primary"
+          style="display: none !important"
+        >
+          <i class="fa fa-crown text-warning fs-3"></i>
+          <p class="mb-0" style="font-size: 16px" id="premiumUserText"></p>
+          <i class="fa fa-crown text-warning fs-3"></i>
+        </span>
+      </div>
+      <!-- IS PREMIUM USER END -->
+
+      <!-- ALL EXPENSES START -->
+      <div
+        class="container d-flex flex-column p-4 pb-0"
+        style="max-width: 650px; min-height: 170px"
+      >
+        <div class="d-flex justify-content-between align-items-end">
+          <h3
+            class="text-white form-control mb-0 py-2 w-auto bg-dark"
+            style="border-radius: 8px 8px 0 0"
+          >
+            <p class="mb-0">
+              No. of Expenses to Show <i class="fa fa-arrow-right ms-2"></i>
+            </p>
+          </h3>
+          <div id="paginationForm" class="mb-0 w-auto me-auto border-dark">
+            <select
+              class="form-select mb-0 py-2 w-auto ms-1 me-auto border-dark"
+              name="expToShow"
+              id="expToShow"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+              <option value="25">25</option>
+              <option value="30">30</option>
+            </select>
+          </div>
+
+          <a
+            href="./generateReport.html"
+            class="btn btn-outline-dark w-auto mb-1 me-2"
+          >
+            See Report
+          </a>
+        </div>
+
+        <ul
+          class="list-unstyled list-group w-100 overflow-scroll"
+          style="max-height: 44vh"
+          id="expenseList"
+        ></ul>
+        <h4 id="loadingExpense" style="display: none" class="text-center mt-5">
+          Add New Expenses Here!
+        </h4>
+      </div>
+      <!-- ALL EXPENSES END -->
+
+      <!-- LEADERBOARD START -->
+      <div
+        id="lbDisplay"
+        class="container d-flex flex-column p-4"
+        style="
+          max-width: 650px;
+          margin-bottom: 100px !important;
+          display: none !important;
+        "
+      >
+        <h3
+          class="text-white d-flex justify-content-center align-items-center text-center form-control mb-1 text-capitalize w-100 bg-primary"
+        >
+          <i class="fa fa-medal text-warning fs-3"></i>
+          <span class="mb-0 fs-5 mx-2 fw-bold">Leaderboard</span>
+          <i class="fa fa-medal text-warning fs-3"></i>
+        </h3>
+        <ul
+          id="lbUserList"
+          class="list-unstyled list-group w-100"
+          style="font-size: 16px"
+        ></ul>
+      </div>
+      <!-- LEADERBOARD END -->
+
+      <!-- TOTAL EXPENSE AMOUNT START -->
+      <div
+        class="container d-flex flex-column justify-content-center px-4"
+        style="
+          max-width: 650px;
+          position: fixed;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+        "
+      >
+        <div class="pt-3 pb-2 bg-white">
+          <div
+            class="form-control d-flex justify-content-between align-items-center p-3 px-4 bg-dark text-white"
+          >
+            <h3 class="text-white mb-0">Total Expense</h3>
+            <div class="d-flex justify-content-between align-items-baseline">
+              <h3 id="totalExpense" class="mb-0 text-light">₹0.00</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL EXPENSE AMOUNT START -->
+    </div>
+    <script src="./expense.js"></script>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- <script src="../axios.js"></script> -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+      integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+  </body>
+</html>
