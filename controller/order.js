@@ -1,7 +1,5 @@
-require("dotenv").config();
 const Razorpay = require("razorpay");
 const Order = require("../model/Order");
-const sequelize = require("../utils/database");
 
 exports.purchasepremium = async (req, res) => {
   try {
@@ -15,7 +13,11 @@ exports.purchasepremium = async (req, res) => {
       if (err) {
         throw new Error(JSON.stringify(err));
       }
-      await req.user.createOrder({ orderId: order.id, status: "PENDING" });
+      await Order.create({
+        orderId: order.id,
+        status: "PENDING",
+        userId: req.user._id,
+      });
       return res.status(201).json({ order, key_id: rzp.key_id });
     });
   } catch (err) {
@@ -33,46 +35,34 @@ exports.updateTrnasectionStatus = async (req, res, next) => {
     ? req.body.error.metadata.order_id
     : req.body.order_id;
 
-  let t;
-
   try {
-    t = await sequelize.transaction();
-
-    const order = await Order.findOne(
-      { where: { orderId: order_id } },
-      { transaction: t }
-    );
+    const order = await Order.findOne({ orderId: order_id });
+    order.paymentId = payment_id;
 
     if (req.body.error) {
-      await order.update(
-        { paymentId: payment_id, status: "FAILED" },
-        { transaction: t }
-      );
-      await t.commit();
+      order.status = "FAILED";
+      await order.save();
+
       return res
         .status(200)
         .json({ success: false, message: "Transection Failed" });
     }
 
-    const updatedOrder = order.update(
-      { paymentId: payment_id, status: "SUCCESSFULL" },
-      { transaction: t }
-    );
+    order.status = "SUCCESSFULL";
+    req.user.isPremium = true;
+    req.user.orders.push(order._id);
 
-    const updatedUser = req.user.update(
-      { isPremium: true },
-      { transaction: t }
-    );
+    const updatedOrder = order.save();
+    const updatedUser = req.user.save();
 
     await Promise.all([updatedOrder, updatedUser]);
-    await t.commit();
+
     return res.status(200).json({
       userName: req.user.name,
       success: true,
       message: "Transection successfull",
     });
   } catch (error) {
-    await t.rollback();
     console.log(err);
   }
 };

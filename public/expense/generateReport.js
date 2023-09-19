@@ -130,7 +130,6 @@ function generateTableHead(table) {
 
 function generateTable(table, data) {
   for (let element of data) {
-    console.log(element);
     let row = table.insertRow();
     for (let key in element) {
       if (key === "createdAt") {

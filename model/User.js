@@ -30,6 +30,8 @@ var userSchema = new mongoose.Schema({
     default: 0,
   },
   expenses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expense" }],
+  orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+  DownloadExpensesList: [],
 });
 
 // Define a static method

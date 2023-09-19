@@ -1,16 +1,19 @@
-const DataType = require("sequelize");
-const sequelize = require("../utils/database");
+const mongoose = require("mongoose");
 
-const ForgotPasswordRequest = sequelize.define("ForgotPasswordRequest", {
-  id: {
-    type: DataType.STRING,
-    primaryKey: true,
-    allowNull: false,
-  },
+const ForgotPasswordRequestSchema = new mongoose.Schema({
   isActive: {
-    type: DataType.BOOLEAN,
-    allowNull: false,
+    type: Boolean,
+    required: true,
+    default: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
 });
 
-module.exports = ForgotPasswordRequest;
+module.exports = mongoose.model(
+  "ForgotPasswordRequest",
+  ForgotPasswordRequestSchema
+);

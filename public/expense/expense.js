@@ -79,7 +79,7 @@ form.addEventListener("submit", (e) => {
 function showExpensesOnScreen(ExpenseObj) {
   const expenseList = document.getElementById("expenseList");
   loadingExpense.style.display = "none";
-  console.log(ExpenseObj._id);
+
   //creating a new li element
   const expense = document.createElement("li");
   expense.className = "list-group-item mb-0";
@@ -406,7 +406,7 @@ function purchasePremiumService(e) {
       headers: { Authorization: token },
     })
     .then((res) => {
-      // console.log(res);
+      console.log(res);
 
       const options = {
         key: res.data.key_id,

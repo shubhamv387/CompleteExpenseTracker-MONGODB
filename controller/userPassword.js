@@ -10,7 +10,7 @@ const sequelize = require("../utils/database");
 // @access  Public
 exports.resetForgotPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({ where: { email: req.body.email } });
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user)
       return res
@@ -21,7 +21,7 @@ exports.resetForgotPassword = async (req, res, next) => {
     const FPR = await ForgotPasswordRequest.create({
       id,
       isActive: true,
-      userId: user.id,
+      userId: user._id,
     });
 
     const defaultClient = await Brevo.ApiClient.instance;
@@ -34,7 +34,7 @@ exports.resetForgotPassword = async (req, res, next) => {
 
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
-    const path = `http://localhost/password/resetpassword/${id}`;
+    const path = `http://localhost:3000/password/resetpassword/${id}`;
 
     const sender = {
       email: "shubhamv387@gmail.com",
@@ -63,9 +63,7 @@ exports.resetForgotPassword = async (req, res, next) => {
 // @access  Private
 exports.createNewPassword = async (req, res, next) => {
   try {
-    const FPR = await ForgotPasswordRequest.findOne({
-      where: { id: req.params.id },
-    });
+    const FPR = await ForgotPasswordRequest.findOne({ id: req.params.id });
     if (!FPR)
       return res
         .status(400)
@@ -122,7 +120,7 @@ exports.createNewPassword = async (req, res, next) => {
                   id="confirmPassword"
                 />
       
-                <input type="submit" value="SEND" class="btn btn-success mt-3" />
+                <input type="submit" value="RESET PASSWORD" class="btn btn-success mt-3" />
               </form>
             </div>
             <!-- FORGOT PASSWORD FORM -->
@@ -130,14 +128,14 @@ exports.createNewPassword = async (req, res, next) => {
       
           <div class="container d-flex flex-column p-4 pb-0" style="max-width: 650px">
             <p id="msg" class="p-1 px-2" style="display: none">p</p>
-            <p id="loginNow" style="display: none">
-              You can
+            <p id="loginNow" style="display: block">
+              You can go to
               <a
                 style="font-weight: bold"
-                href="http://localhost/login/login.html"
-                >Login Now</a
+                href="http://localhost:3000/login/login.html"
+                >Login Page</a
               >
-              with the new password.
+              from here.
             </p>
           </div>
       
@@ -192,41 +190,30 @@ exports.PostCreateNewPassword = async (req, res, next) => {
       .status(400)
       .send({ status: "Failed", message: "MisMatched Passwords!" });
 
-  const t = await sequelize.transaction();
   try {
-    const FPR = await ForgotPasswordRequest.findOne(
-      { where: { id: id } },
-      { transaction: t }
-    );
+    const FPR = await ForgotPasswordRequest.findOne({ id });
 
     if (!FPR.isActive) {
-      await t.commit();
       return res.status(400).send({
         status: "Failed",
         message: "Link Expired! Go back and generate a New Link",
       });
     }
 
-    const hashedPassword = bcrypt.hashSync(pass, 10);
+    FPR.isActive = false;
+    await FPR.save();
 
-    const updatedFPR = ForgotPasswordRequest.update(
-      { isActive: false },
-      { where: { id: id } },
-      { transaction: t }
-    );
-    const updatedUser = User.update(
-      { password: hashedPassword },
-      { where: { id: FPR.userId } },
-      { transaction: t }
-    );
+    const hashedPassword = bcrypt.hashSync(pass, bcrypt.genSaltSync(10));
 
-    await Promise.all([updatedFPR, updatedUser]);
-    await t.commit();
+    const updatedUser = await User.findOne({ _id: FPR.userId });
+    updatedUser.password = hashedPassword;
+
+    await updatedUser.save();
+
     res
       .status(200)
       .send({ status: "Success", message: "Password Updated Successfully" });
   } catch (error) {
-    t.rollback();
     console.log(error);
   }
 };

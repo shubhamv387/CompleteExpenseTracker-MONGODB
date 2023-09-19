@@ -3,6 +3,7 @@ const DownloadExpensesList = require("../model/DownloadedExpenseList");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 const { uploadeToS3 } = require("../services/S3Services");
+const { default: mongoose } = require("mongoose");
 require("dotenv").config();
 
 // @desc    Get All Users
@@ -147,19 +148,20 @@ exports.updateUserProfile = async (req, res, next) => {
 // @access  Premium Users Only
 exports.downloadExpensesReport = async (req, res, next) => {
   try {
-    const userExpenses = await req.user.getExpenses();
-    const fileName = `${req.user.id}/Expense${new Date().getTime()}.txt`;
+    const userExpenses = await req.user.populate("expenses");
+    const fileName = `${req.user._id}/Expense${new Date().getTime()}.txt`;
 
-    const data = JSON.stringify(userExpenses);
+    const data = JSON.stringify(userExpenses.expenses);
 
     const fileUrl = await uploadeToS3(data, fileName);
 
-    await DownloadExpensesList.create({
-      fileUrl: fileUrl,
-      userId: req.user.id,
+    req.user.DownloadExpensesList.push({
+      _id: new mongoose.Types.ObjectId(),
+      createdAt: new Date(),
+      fileUrl,
     });
 
-    // await req.user.createDownloadExpensesList({ fileUrl: fileUrl });
+    await req.user.save();
 
     res.status(200).json({
       success: true,
@@ -178,14 +180,17 @@ exports.downloadExpensesReport = async (req, res, next) => {
 // @route   GET /user/expense-report-downloaded-list
 // @access  Premium Users Only
 exports.getDownloadedExpenseList = async (req, res, next) => {
-  const DownloadedExpList = await DownloadExpensesList.findAll({
-    where: { userId: req.user.id },
-    order: [["createdAt", "DESC"]],
-  });
+  // const DownloadedExpList = await DownloadExpensesList.findAll({
+  //   where: { userId: req.user.id },
+  //   order: [["createdAt", "DESC"]],
+  // });
   // console.log(DownloadedExpList);
+
   res.status(200).json({
     success: true,
     message: "getting list",
-    expenseList: DownloadedExpList,
+    expenseList: req.user.DownloadExpensesList
+      ? req.user.DownloadExpensesList
+      : [],
   });
 };
