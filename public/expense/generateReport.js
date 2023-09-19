@@ -118,9 +118,10 @@ profilePic.addEventListener("click", () => {
 function generateTableHead(table) {
   let thead = table.createTHead();
   let row = thead.insertRow();
-  let thData = ["Date", "Description", "Category", "Expense"];
+  let thData = ["Amount", "Description", "Category", "Date"];
   for (let key of thData) {
     let th = document.createElement("th");
+    if (key === "Amount") th.className = "text-end";
     let text = document.createTextNode(key);
     th.appendChild(text);
     row.appendChild(th);
@@ -129,8 +130,9 @@ function generateTableHead(table) {
 
 function generateTable(table, data) {
   for (let element of data) {
+    console.log(element);
     let row = table.insertRow();
-    for (key in element) {
+    for (let key in element) {
       if (key === "createdAt") {
         let cell = row.insertCell();
         let text = document.createTextNode(

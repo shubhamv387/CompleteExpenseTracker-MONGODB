@@ -1,44 +1,47 @@
-const DataType = require("sequelize");
-const sequelize = require("../utils/database");
+const mongoose = require("mongoose");
 
-const User = sequelize.define("user", {
-  id: {
-    type: DataType.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true,
-  },
+var userSchema = new mongoose.Schema({
   name: {
-    type: DataType.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   email: {
-    type: DataType.STRING,
-    allowNull: false,
-  },
-  password: {
-    type: DataType.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
   },
   phone: {
-    type: DataType.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    minLength: 6,
   },
   isPremium: {
-    type: DataType.BOOLEAN,
-    defaultValue: false,
+    type: Boolean,
+    default: false,
   },
   allExpenses: {
-    type: DataType.DOUBLE,
-    defaultValue: 0,
+    type: Number,
+    default: 0,
   },
+  expenses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expense" }],
 });
 
 // Define a static method
-User.findByIdAndUpdateAllExpenses = async function (lastAmount, newAmount, id) {
+userSchema.statics.findByIdAndUpdateAllExpenses = async function (
+  lastAmount,
+  newAmount,
+  id
+) {
   const user = await this.findOne({ where: { id } });
   user.allExpenses -= lastAmount;
   user.allExpenses += newAmount;
 };
 
-module.exports = User;
+//Export the model
+module.exports = mongoose.model("User", userSchema);

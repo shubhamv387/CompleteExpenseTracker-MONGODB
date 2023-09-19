@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
-require("dotenv").config();
 
 exports.authUser = async (req, res, next) => {
   // console.log(req.headers.authorization);
@@ -8,17 +7,9 @@ exports.authUser = async (req, res, next) => {
   try {
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      const user = await User.findOne({
-        where: { id: decoded.userId },
-        attributes: [
-          "id",
-          "name",
-          "email",
-          "phone",
-          "isPremium",
-          "allExpenses",
-        ],
-      });
+      const user = await User.findOne({ _id: decoded.userId }).select(
+        "-password"
+      );
       // console.log(user);
       if (user) req.user = user;
       else

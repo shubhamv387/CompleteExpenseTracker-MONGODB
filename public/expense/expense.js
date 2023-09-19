@@ -78,9 +78,8 @@ form.addEventListener("submit", (e) => {
 
 function showExpensesOnScreen(ExpenseObj) {
   const expenseList = document.getElementById("expenseList");
-
   loadingExpense.style.display = "none";
-
+  console.log(ExpenseObj._id);
   //creating a new li element
   const expense = document.createElement("li");
   expense.className = "list-group-item mb-0";
@@ -145,7 +144,7 @@ function showExpensesOnScreen(ExpenseObj) {
       else {
         axios
           .put(
-            `http://localhost:3000/expenses/edit-expense/${ExpenseObj.id}`,
+            `http://localhost:3000/expenses/edit-expense/${ExpenseObj._id}`,
             updatedExpense,
             {
               headers: { Authorization: token },
@@ -194,7 +193,7 @@ function showExpensesOnScreen(ExpenseObj) {
     // console.log(token);
     axios
       .delete(
-        `http://localhost:3000/expenses/delete-expense/${ExpenseObj.id}`,
+        `http://localhost:3000/expenses/delete-expense/${ExpenseObj._id}`,
         {
           headers: { Authorization: token },
         }
@@ -256,7 +255,8 @@ function showOnReload(page, limit) {
           }
           if (!isPremium) {
             document.getElementById("getpremium").style.display = "block";
-            document.getElementById("expenseList").style.marginBottom = "100px";
+            document.getElementById("paginationDiv").style.marginBottom =
+              "100px";
             document.getElementById("lbUserList").style.display = "none";
           } else {
             leaderBoardFeature();
@@ -272,7 +272,7 @@ function showOnReload(page, limit) {
         totalExpense.innerHTML = rupee.format(totalPrice);
         console.log(err.message);
         setTimeout(() => {
-          window.location.replace("../login/login.html");
+          // window.location.replace("../login/login.html");
         }, 1500);
         loadingExpense.innerHTML = "Not authorized, please login again!";
       });
@@ -382,7 +382,7 @@ function leaderBoardFeature() {
 
 const logout = document.getElementById("logout");
 logout.addEventListener("click", () => {
-  localStorage.setItem("token", "");
+  localStorage.removeItem("token");
   localStorage.removeItem("listOfExpenseToShow");
   window.location.replace("../login/login.html");
 });

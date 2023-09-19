@@ -17,12 +17,12 @@ router.post("/signup", userController.userSignup);
 
 router.post("/login", userController.userLogin);
 
-router.post("/logout", userController.logoutUser);
+// router.post("/logout", userController.logoutUser);
 
-router
-  .route("/profile")
-  .get(authMiddleware.authUser, userController.getUserProfile)
-  .put(authMiddleware.authUser, userController.updateUserProfile);
+// router
+//   .route("/profile")
+//   .get(authMiddleware.authUser, userController.getUserProfile)
+//   .put(authMiddleware.authUser, userController.updateUserProfile);
 
 router.get(
   "/downloadexpensesreport",

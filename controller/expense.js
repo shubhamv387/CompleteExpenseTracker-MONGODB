@@ -1,13 +1,12 @@
 const Expense = require("../model/Expense");
 const User = require("../model/User");
-const sequelize = require("../utils/database");
 
 // @desc    getting all expenses
 // @route   GET /expense/
 // @access  Private
 exports.getAllExpenses = async (req, res, next) => {
   try {
-    const expenses = await req.user.getExpenses();
+    const expenses = await Expense.find({ userId: req.user._id });
     return res.json({
       userName: req.user.name,
       isPremium: req.user.isPremium,
@@ -20,14 +19,15 @@ exports.getAllExpenses = async (req, res, next) => {
 };
 
 // @desc    getting all expenses
-// @route   GET /expense/
+// @route   GET /expense/generatereport
 // @access  Private
 exports.generateReport = async (req, res, next) => {
   try {
-    const expenses = await req.user.getExpenses({
-      attributes: ["createdAt", "description", "category", "amount"],
-      order: [["createdAt", "DESC"]],
-    });
+    const expenses = await Expense.find({ userId: req.user._id })
+      .select("-_id createdAt description category amount")
+      .sort({
+        createdAt: "DESC",
+      });
     return res.json({
       userName: req.user.name,
       isPremium: req.user.isPremium,
@@ -44,27 +44,25 @@ exports.generateReport = async (req, res, next) => {
 // @access  Private
 exports.addExpense = async (req, res, next) => {
   const { amount, description, category } = req.body;
-  const t = await sequelize.transaction();
   try {
-    const expense = await req.user.createExpense(
-      {
-        amount,
-        description,
-        category,
-      },
-      { transaction: t }
-    );
-    const user = await User.findOne(
-      { where: { id: req.user.id } },
-      { transaction: t }
-    );
-    let newTotal = user.allExpenses + amount;
+    const expense = new Expense({
+      amount,
+      description,
+      category,
+      userId: req.user,
+    });
 
-    await user.update({ allExpenses: newTotal }, { transaction: t });
-    await t.commit();
+    await expense.save();
+
+    const user = await User.findOne({ _id: req.user._id });
+
+    user.allExpenses += amount;
+    user.expenses.push(expense._id);
+
+    await user.save();
+
     res.status(200).json({ expense, isPremium: user.isPremium });
   } catch (error) {
-    await t.rollback();
     console.log(error);
     return res.status(400).json({ Error: "Something Wrong", error });
   }
@@ -76,38 +74,29 @@ exports.addExpense = async (req, res, next) => {
 exports.editExpense = async (req, res, next) => {
   const { id } = req.params;
   const { amount, description, category } = req.body;
-  const t = await sequelize.transaction();
 
   try {
-    const exp = await Expense.findOne({ where: { id } }, { transaction: t });
-    const user = await User.findOne(
-      { where: { id: req.user.id } },
-      { transaction: t }
-    );
+    const exp = await Expense.findOne({ _id: id });
 
-    let newTotal = user.allExpenses - exp.amount + +amount;
-    await User.update(
-      { allExpenses: newTotal },
-      { where: { id: req.user.id } },
-      { transaction: t }
-    );
+    req.user.allExpenses = req.user.allExpenses - exp.amount + +amount;
 
-    await Expense.update(
-      { amount, description, category },
-      { where: { id: id } },
-      { transaction: t }
-    );
+    await req.user.save();
 
-    await t.commit();
+    exp.amount = amount;
+    exp.description = description;
+    exp.category = category;
+    exp.userId = req.user;
+
+    await exp.save();
+
     return res.status(200).json({
-      id,
+      _id: id,
       amount,
       description,
       category,
-      isPremium: user.isPremium,
+      isPremium: req.user.isPremium,
     });
   } catch (error) {
-    await t.rollback();
     console.log(error);
     return res.status(400).json({ Error: "Something Wrong", error });
   }
@@ -118,29 +107,24 @@ exports.editExpense = async (req, res, next) => {
 // @access  Private
 exports.deleteExpense = async (req, res, next) => {
   const { id } = req.params;
-  const t = await sequelize.transaction();
   try {
-    const expense = await Expense.findOne(
-      { where: { id } },
-      { transaction: t }
-    );
-    const user = await User.findOne(
-      { where: { id: req.user.id } },
-      { transaction: t }
+    const expense = await Expense.findOne({ _id: id });
+
+    req.user.allExpenses -= expense.amount;
+    if (req.user.allExpenses < 0) req.user.allExpenses = 0;
+
+    const newExpenses = req.user.expenses.filter(
+      (e) => e.toString() !== id.toString()
     );
 
-    let newTotal = user.allExpenses - expense.amount;
-    if (newTotal < 0) newTotal = 0;
-    const updateUser = await user.update(
-      { allExpenses: newTotal },
-      { transaction: t }
-    );
-    await expense.destroy({ transaction: t });
+    req.user.expenses = newExpenses;
 
-    await t.commit();
-    return res.status(200).json({ expense, isPremium: updateUser.isPremium });
+    await req.user.save();
+
+    await Expense.deleteOne({ _id: id });
+
+    return res.status(200).json({ expense, isPremium: req.user.isPremium });
   } catch (error) {
-    await t.rollback();
     console.log(error);
     return res.status(400).json({ Error: "Something Wrong", error });
   }
@@ -151,10 +135,9 @@ exports.deleteExpense = async (req, res, next) => {
 // @access  Private
 exports.getLbUsersExpenses = async (req, res, next) => {
   try {
-    const users = await User.findAll({
-      attributes: ["id", "name", "allExpenses"],
-      order: [["allExpenses", "DESC"]],
-    });
+    const users = await User.find()
+      .select("_id name allExpenses")
+      .sort({ allExpenses: "DESC" });
 
     return res.json({
       status: "Success",
@@ -171,16 +154,17 @@ exports.getLbUsersExpenses = async (req, res, next) => {
 // @access  Private
 exports.getExpensePagination = async (req, res, next) => {
   try {
-    // console.log(req.query);
     const ITEM_PER_PAGE = +req.query.limit || 4;
     const page = +req.query.page || 1;
-    let totalExpenses = await Expense.count({ where: { userId: req.user.id } });
+    let totalExpenses = await Expense.count({ userId: req.user._id });
+    // console.log(totalExpenses);
+    const expenses = await Expense.find({ userId: req.user._id })
+      .skip((page - 1) * ITEM_PER_PAGE)
+      .limit(ITEM_PER_PAGE)
+      .sort({ createdAt: "DESC" });
 
-    const expenses = await req.user.getExpenses({
-      offset: (page - 1) * ITEM_PER_PAGE,
-      limit: ITEM_PER_PAGE,
-      order: [["createdAt", "DESC"]],
-    });
+    // const exps = await req.user.populate("expenses");
+    // console.log(exps.expenses);
 
     return res.json({
       status: "Success",

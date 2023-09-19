@@ -1,42 +1,44 @@
 const express = require("express");
 
-const path = require("path");
-const sequelize = require("./utils/database");
-const cors = require("cors");
-const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
-require("dotenv");
+const path = require("path");
+const cors = require("cors");
+
+require("dotenv").config();
 const PORT = process.env.PORT || 3000;
 
 //Routers
 const userRouter = require("./router/user");
-const userPasswordRouter = require("./router/userPassword");
+// const userPasswordRouter = require("./router/userPassword");
 const expenseRouter = require("./router/expense");
-const orderRouter = require("./router/order");
+// const orderRouter = require("./router/order");
 
 // Models
 const User = require("./model/User");
-const Expenses = require("./model/Expense");
-const Order = require("./model/Order");
-const ForgotPasswordRequest = require("./model/ForgotPasswordRequests");
-const DownloadExpensesList = require("./model/DownloadedExpenseList");
+// const Expenses = require("./model/Expense");
+// const Order = require("./model/Order");
+// const ForgotPasswordRequest = require("./model/ForgotPasswordRequests");
+// const DownloadExpensesList = require("./model/DownloadedExpenseList");
 
 const app = express();
 app.use(cors());
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/users", userRouter);
-app.use("/password", userPasswordRouter);
+// app.use("/password", userPasswordRouter);
 app.use("/expenses", expenseRouter);
-app.use("/orders", orderRouter);
+// app.use("/orders", orderRouter);
 
 app.use((req, res, next) => {
-  res.sendFile(path.join(__dirname, `public/${req.url}`));
+  res.status(400).json({ message: "page not found" });
 });
 
-User.hasMany(Expenses);
+/* User.hasMany(Expenses);
 Expenses.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 
 User.hasMany(Order);
@@ -52,11 +54,10 @@ User.hasMany(DownloadExpensesList);
 DownloadExpensesList.belongsTo(User, {
   constraints: true,
   onDelete: "CASCADE",
-});
+}); */
 
-sequelize
-  // .sync({ force: true })
-  .sync()
+mongoose
+  .connect(process.env.MONGO_URL)
   .then(() => {
     app.listen(PORT, () =>
       console.log(`server is running on http://localhost:${PORT}`)

@@ -10,7 +10,7 @@ require("dotenv").config();
 // @access  Admin
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.findAll();
+    const users = await User.find();
     res.json(users);
   } catch (err) {
     console.log(err);
@@ -23,28 +23,30 @@ exports.getAllUsers = async (req, res, next) => {
 exports.userSignup = async (req, res, next) => {
   const { name, email, password, phone } = req.body;
   try {
-    const existingUser = await User.findAll({ where: { email: email } });
-    if (existingUser.length)
-      return res.json({ message: "Email already exists!" });
+    const existingUser = await User.findOne({ email: email });
+    if (existingUser) return res.json({ message: "Email already exists!" });
     else {
-      const hashedPassword = bcrypt.hashSync(password, 10);
-      const user = await User.create({
+      const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+      const user = new User({
         name: name,
         email: email,
         password: hashedPassword,
         phone: phone,
+        expenses: [],
       });
 
-      const token = generateToken.generateToken(res, user.id);
+      await user.save();
+
+      const token = generateToken.generateToken(res, user._id);
       res.status(201).json({
         message: "User Created Successfully!",
         userDetails: {
-          id: user.id,
+          id: user._id,
           name: user.name,
           email: user.email,
           phone: user.phone,
         },
-        token: token,
+        token,
       });
     }
   } catch (err) {
@@ -59,24 +61,23 @@ exports.userLogin = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const existingUser = await User.findAll({ where: { email: email } });
+    const existingUser = await User.findOne({ email: email });
 
-    if (!existingUser.length)
-      return res.json({ message: "User does not Exists!" });
+    if (!existingUser) return res.json({ message: "User does not Exists!" });
     else {
-      const user = existingUser[0];
-      const token = generateToken.generateToken(res, user.id);
+      const user = existingUser;
+      const token = generateToken.generateToken(res, user._id);
       const isCorrectPassword = bcrypt.compareSync(password, user.password);
       if (isCorrectPassword)
         return res.json({
           message: "User Logged in Successfully!",
           userDetails: {
-            id: user.id,
+            id: user._id,
             name: user.name,
             email: user.email,
             phone: user.phone,
           },
-          token: token,
+          token,
         });
       else return res.json({ message: "Wrong Credentials!" });
     }
