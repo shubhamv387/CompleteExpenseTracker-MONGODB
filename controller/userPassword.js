@@ -3,13 +3,15 @@ const ForgotPasswordRequest = require("../model/ForgotPasswordRequests");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcryptjs");
 const User = require("../model/User");
-const sequelize = require("../utils/database");
+const { default: mongoose } = require("mongoose");
 
 // @desc    Sending password reset mail to User
 // @route   POST /user/password/forgotpassword
 // @access  Public
 exports.resetForgotPassword = async (req, res, next) => {
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const user = await User.findOne({ email: req.body.email });
 
     if (!user)
@@ -18,11 +20,13 @@ exports.resetForgotPassword = async (req, res, next) => {
         .json({ status: "Failed", message: "email does not Exists!" });
 
     const id = uuidv4();
-    const FPR = await ForgotPasswordRequest.create({
-      id,
+    const FPR = new ForgotPasswordRequest({
       isActive: true,
       userId: user._id,
+      id,
     });
+
+    await FPR.save({ session });
 
     const defaultClient = await Brevo.ApiClient.instance;
 
@@ -50,11 +54,15 @@ exports.resetForgotPassword = async (req, res, next) => {
       htmlContent: `<a href="${path}">Click Here</a> to reset your password!`,
     });
 
+    await session.commitTransaction();
     res
       .status(200)
       .json({ status: "Success", message: "email sent successfully!" });
   } catch (error) {
-    console.error(error);
+    await session.abortTransaction();
+    console.error(error.message.underline.red);
+  } finally {
+    await session.endSession();
   }
 };
 
@@ -184,6 +192,7 @@ exports.createNewPassword = async (req, res, next) => {
 exports.PostCreateNewPassword = async (req, res, next) => {
   const { id } = req.params;
   const { pass, confirmPass } = req.body;
+  const session = await mongoose.startSession();
 
   if (pass !== confirmPass)
     return res
@@ -191,7 +200,8 @@ exports.PostCreateNewPassword = async (req, res, next) => {
       .send({ status: "Failed", message: "MisMatched Passwords!" });
 
   try {
-    const FPR = await ForgotPasswordRequest.findOne({ id });
+    session.startTransaction();
+    const FPR = await ForgotPasswordRequest.findOne({ id }); // this id is 'uuid'
 
     if (!FPR.isActive) {
       return res.status(400).send({
@@ -201,19 +211,28 @@ exports.PostCreateNewPassword = async (req, res, next) => {
     }
 
     FPR.isActive = false;
-    await FPR.save();
 
     const hashedPassword = bcrypt.hashSync(pass, bcrypt.genSaltSync(10));
 
-    const updatedUser = await User.findOne({ _id: FPR.userId });
-    updatedUser.password = hashedPassword;
+    const updatedUser = User.updateOne(
+      { _id: FPR.userId },
+      { $set: { password: hashedPassword } },
+      { session }
+    );
 
-    await updatedUser.save();
+    // updating user and FPR parallelly using Promise.all
+    await Promise.all([FPR.save({ session }), updatedUser]);
 
+    // throw new Error("custome error");
+
+    await session.commitTransaction();
     res
       .status(200)
       .send({ status: "Success", message: "Password Updated Successfully" });
   } catch (error) {
-    console.log(error);
+    await session.abortTransaction();
+    console.log(error.message.underline.red);
+  } finally {
+    await session.endSession();
   }
 };

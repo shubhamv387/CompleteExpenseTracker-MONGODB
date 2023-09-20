@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Expense = require("../model/Expense");
 const User = require("../model/User");
 
@@ -44,27 +45,38 @@ exports.generateReport = async (req, res, next) => {
 // @access  Private
 exports.addExpense = async (req, res, next) => {
   const { amount, description, category } = req.body;
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const expense = new Expense({
       amount,
       description,
       category,
-      userId: req.user,
+      userId: req.user._id,
     });
 
-    await expense.save();
+    req.user.allExpenses += amount;
+    req.user.expenses.push(expense._id);
 
-    const user = await User.findOne({ _id: req.user._id });
+    await Promise.all([
+      expense.save({ session }),
+      req.user.save({ session }),
+      new Error("custome error"),
+    ]);
 
-    user.allExpenses += amount;
-    user.expenses.push(expense._id);
+    // throw new Error("custome error");
 
-    await user.save();
-
-    res.status(200).json({ expense, isPremium: user.isPremium });
+    await session.commitTransaction();
+    return res.status(200).json({ expense, isPremium: req.user.isPremium });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ Error: "Something Wrong", error });
+    await session.abortTransaction();
+    console.log(
+      "expense.js line 68".underline.red,
+      error.message.underline.red
+    );
+    return res.status(400).json({ success: false, message: error.message });
+  } finally {
+    await session.endSession();
   }
 };
 
@@ -74,20 +86,27 @@ exports.addExpense = async (req, res, next) => {
 exports.editExpense = async (req, res, next) => {
   const { id } = req.params;
   const { amount, description, category } = req.body;
+  const session = await mongoose.startSession();
 
   try {
+    session.startTransaction();
     const exp = await Expense.findOne({ _id: id });
 
+    // updating curr user
     req.user.allExpenses = req.user.allExpenses - exp.amount + +amount;
 
-    await req.user.save();
-
+    // updating expense Data
     exp.amount = amount;
     exp.description = description;
     exp.category = category;
-    exp.userId = req.user;
+    exp.userId = req.user._id;
 
-    await exp.save();
+    // saving both user and expense parallelly
+    await Promise.all([req.user.save({ session }), exp.save({ session })]);
+
+    // throw new Error("custom error");
+
+    await session.commitTransaction();
 
     return res.status(200).json({
       _id: id,
@@ -97,8 +116,11 @@ exports.editExpense = async (req, res, next) => {
       isPremium: req.user.isPremium,
     });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ Error: "Something Wrong", error });
+    await session.abortTransaction();
+    console.error(error.message.underline.red);
+    return res.status(400).json({ success: false, message: error.message });
+  } finally {
+    await session.endSession();
   }
 };
 
@@ -107,7 +129,9 @@ exports.editExpense = async (req, res, next) => {
 // @access  Private
 exports.deleteExpense = async (req, res, next) => {
   const { id } = req.params;
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const expense = await Expense.findOne({ _id: id });
 
     req.user.allExpenses -= expense.amount;
@@ -119,14 +143,22 @@ exports.deleteExpense = async (req, res, next) => {
 
     req.user.expenses = newExpenses;
 
-    await req.user.save();
+    // saving user and deleting expense parallelly using Promise.all
+    await Promise.all([
+      req.user.save({ session }),
+      Expense.deleteOne({ _id: id }, { session }),
+    ]);
 
-    await Expense.deleteOne({ _id: id });
+    // throw new Error("custome error");
 
+    await session.commitTransaction();
     return res.status(200).json({ expense, isPremium: req.user.isPremium });
   } catch (error) {
-    console.log(error);
+    await session.abortTransaction();
+    console.log(error.message.underline.red);
     return res.status(400).json({ Error: "Something Wrong", error });
+  } finally {
+    await session.endSession();
   }
 };
 

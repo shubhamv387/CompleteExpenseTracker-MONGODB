@@ -1,41 +1,52 @@
 const mongoose = require("mongoose");
 
-var userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
+const childSchema = new mongoose.Schema(
+  {
+    fileUrl: {
+      type: String,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
+  { timestamps: true }
+);
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    phone: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      min: 6,
+    },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    allExpenses: {
+      type: Number,
+      default: 0,
+    },
+    expenses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expense" }],
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+    DownloadExpensesList: [childSchema],
   },
-  phone: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-    minLength: 6,
-  },
-  isPremium: {
-    type: Boolean,
-    default: false,
-  },
-  allExpenses: {
-    type: Number,
-    default: 0,
-  },
-  expenses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expense" }],
-  orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
-  DownloadExpensesList: [],
-});
+  { versionKey: false }
+);
 
 // Define a static method
-userSchema.statics.findByIdAndUpdateAllExpenses = async function (
+userSchema.methods.findByIdAndUpdateAllExpenses = async function (
   lastAmount,
   newAmount,
   id

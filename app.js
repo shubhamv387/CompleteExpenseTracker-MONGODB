@@ -1,9 +1,9 @@
 const express = require("express");
-
-const mongoose = require("mongoose");
+const { connectdb } = require("./utils/database");
 
 const path = require("path");
 const cors = require("cors");
+require("colors");
 
 require("dotenv").config();
 const PORT = process.env.PORT || 3000;
@@ -31,19 +31,12 @@ app.use((req, res, next) => {
   res.status(400).json({ message: "page not found" });
 });
 
-/* 
-User.hasMany(DownloadExpensesList);
-DownloadExpensesList.belongsTo(User, {
-  constraints: true,
-  onDelete: "CASCADE",
-}); 
-*/
-
-mongoose
-  .connect(process.env.MONGO_URL)
+connectdb()
   .then(() => {
-    app.listen(PORT, () =>
-      console.log(`server is running on http://localhost:${PORT}`)
-    );
+    app.listen(PORT, () => {
+      console.log(
+        `server is running on http://localhost:${PORT}`.underline.cyan
+      );
+    });
   })
   .catch((err) => console.log(err));

@@ -255,14 +255,15 @@ function showOnReload(page, limit) {
           }
           if (!isPremium) {
             document.getElementById("getpremium").style.display = "block";
-            document.getElementById("paginationDiv").style.marginBottom =
-              "100px";
+            document.getElementById("mainDiv").style.marginBottom = "100px";
             document.getElementById("lbUserList").style.display = "none";
           } else {
             leaderBoardFeature();
             document.getElementById("premiumUserText").innerText = `Hey ${
               userName.split(" ")[0]
             }, You Are A Premium User`;
+
+            document.getElementById("mainDiv").style.marginBottom = "auto";
             document.getElementById("premiumUser").style.display = "block";
           }
           totalExpense.innerHTML = rupee.format(totalPrice);
@@ -272,7 +273,7 @@ function showOnReload(page, limit) {
         totalExpense.innerHTML = rupee.format(totalPrice);
         console.log(err.message);
         setTimeout(() => {
-          // window.location.replace("../login/login.html");
+          window.location.replace("../login/login.html");
         }, 1500);
         loadingExpense.innerHTML = "Not authorized, please login again!";
       });
