@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const { uploadeToS3 } = require("../services/S3Services");
 const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
+const Expense = require("../model/Expense");
 
 // @desc    Get All Users
 // @route   GET /user/allusers
@@ -161,11 +162,14 @@ exports.updateUserProfile = async (req, res, next) => {
 // @route   GET /user/downloadexpensesreport
 // @access  Premium Users Only
 exports.downloadExpensesReport = async (req, res, next) => {
+  const session = await mongoose.startSession();
   try {
-    const userExpenses = await req.user.populate("expenses");
+    session.startTransaction();
+    // const userExpenses = await req.user.populate("expenses");
+    const userExpenses = await Expense.find().select("-_id -userId");
     const fileName = `${req.user._id}/Expense${new Date().getTime()}.txt`;
 
-    const data = JSON.stringify(userExpenses.expenses);
+    const data = JSON.stringify(userExpenses);
 
     const fileUrl = await uploadeToS3(data, fileName);
 
@@ -173,18 +177,22 @@ exports.downloadExpensesReport = async (req, res, next) => {
       fileUrl,
     });
 
-    await req.user.save();
+    await req.user.save({ session });
 
+    await session.commitTransaction();
     res.status(200).json({
       success: true,
       fileUrl,
       message: "Download Successful",
     });
   } catch (error) {
-    console.log(error);
+    await session.abortTransaction();
+    console.log(error.message.underline.red);
     res
       .status(500)
       .json({ success: false, message: "Download Failed", err: error });
+  } finally {
+    await session.endSession();
   }
 };
 
