@@ -14,27 +14,25 @@ exports.purchasepremium = async (req, res) => {
 
     rzp.orders.create({ amount, currency: "INR" }, async (err, order) => {
       if (err) {
-        throw new Error(JSON.stringify(err));
+        throw new Error(err);
       }
+      const newOrder = new Order({
+        orderId: order.id,
+        status: "PENDING",
+        userId: req.user._id,
+      });
 
-      await Order.create(
-        {
-          orderId: order.id,
-          status: "PENDING",
-          userId: req.user._id,
-        },
-        { session }
-      );
+      await newOrder.save({ session });
 
       await session.commitTransaction();
+      await session.endSession();
       return res.status(201).json({ order, key_id: rzp.key_id });
     });
-  } catch (err) {
+  } catch (error) {
     await session.abortTransaction();
-    console.log(err.message.underline.red);
-    return res.status(403).json({ success: false, message: err.message });
-  } finally {
+    console.log(error.message.underline.red);
     await session.endSession();
+    return res.status(403).json({ success: false, message: error.message });
   }
 };
 
