@@ -50,7 +50,7 @@ form.addEventListener("submit", (e) => {
     description: description.value,
     category: category.value,
   };
-
+  startLoader();
   // POST request to backend
   axios
     .post("http://localhost:3000/expenses/add-expense", ExpenseObj, {
@@ -58,22 +58,26 @@ form.addEventListener("submit", (e) => {
     })
     .then((res) => {
       // adding each expense in the Expenselist
-
+      stopLoader();
       showExpensesOnScreen(res.data.expense);
 
       showTotalExpense.innerText = rupee.format(totalPrice);
+
+      // resetting the input fields after submission
+      amount.value = "";
+      description.value = "";
+      category.value = "";
 
       return res.data;
     })
     .then((addedExpense) => {
       if (addedExpense.isPremium) leaderBoardFeature();
     })
-    .catch((err) => console.log(err.message));
-
-  // resetting the input fields after submission
-  amount.value = "";
-  description.value = "";
-  category.value = "";
+    .catch((err) => {
+      stopLoader();
+      alert("Somthing went wrong...");
+      console.log(err.message);
+    });
 });
 
 function showExpensesOnScreen(ExpenseObj) {
@@ -142,6 +146,7 @@ function showExpensesOnScreen(ExpenseObj) {
       )
         alert("All inputs should be filled");
       else {
+        startLoader();
         axios
           .put(
             `http://localhost:3000/expenses/edit-expense/${ExpenseObj._id}`,
@@ -151,6 +156,7 @@ function showExpensesOnScreen(ExpenseObj) {
             }
           )
           .then((updatedExpense) => {
+            stopLoader();
             let showTotalExpense = document.getElementById("totalExpense");
             totalPrice -= parseFloat(ExpenseObj.amount);
 
@@ -182,7 +188,10 @@ function showExpensesOnScreen(ExpenseObj) {
           .then((updatedExpense) => {
             if (updatedExpense.isPremium) leaderBoardFeature();
           })
-          .catch((err) => console.log(err.message, err.response.data));
+          .catch((err) => {
+            stopLoader();
+            console.log(err.message, err.response.data);
+          });
       }
     }
   }
@@ -191,6 +200,7 @@ function showExpensesOnScreen(ExpenseObj) {
   deleteBtn.addEventListener("click", deleteExpense);
   function deleteExpense() {
     // console.log(token);
+    startLoader();
     axios
       .delete(
         `http://localhost:3000/expenses/delete-expense/${ExpenseObj._id}`,
@@ -199,6 +209,7 @@ function showExpensesOnScreen(ExpenseObj) {
         }
       )
       .then((deletedExpense) => {
+        stopLoader();
         let showTotalExpense = document.getElementById("totalExpense");
         totalPrice -= parseFloat(deletedExpense.data.expense.amount);
         showTotalExpense.innerText = rupee.format(totalPrice);
@@ -213,7 +224,10 @@ function showExpensesOnScreen(ExpenseObj) {
       .then((deletedExpense) => {
         if (deletedExpense.isPremium) leaderBoardFeature();
       })
-      .catch((err) => console.log(err.message));
+      .catch((err) => {
+        stopLoader();
+        console.log(err.message);
+      });
   }
 }
 
@@ -401,13 +415,13 @@ document
 
 function purchasePremiumService(e) {
   e.preventDefault();
-
+  startLoader();
   axios
     .get("http://localhost:3000/orders/premiummembership", {
       headers: { Authorization: token },
     })
     .then((res) => {
-      console.log(res);
+      stopLoader();
 
       const options = {
         key: res.data.key_id,
@@ -418,6 +432,7 @@ function purchasePremiumService(e) {
 
           // Send the payment_id to your server for updating transaction status
           try {
+            startLoader();
             const response = await axios.post(
               "http://localhost:3000/orders/updatetrnasectionstatus",
               { order_id: options.order_id, payment_id: payment_id },
@@ -425,6 +440,7 @@ function purchasePremiumService(e) {
                 headers: { Authorization: token },
               }
             );
+            stopLoader();
             document.getElementById("premiumUserText").innerText = `Hey ${
               response.data.userName.split(" ")[0]
             }, You Are A Premium User`;
@@ -435,6 +451,7 @@ function purchasePremiumService(e) {
             leaderBoardFeature();
             alert("You are a Premium User Now!");
           } catch (error) {
+            stopLoader();
             console.error("Error updating transaction status:", error);
             alert("Payment successful, but transaction update failed.");
           }
@@ -447,6 +464,7 @@ function purchasePremiumService(e) {
 
       // Handle payment failure
       rzp1.on("payment.failed", function (response) {
+        startLoader();
         axios
           .post(
             "http://localhost:3000/orders/updatetrnasectionstatus",
@@ -456,16 +474,29 @@ function purchasePremiumService(e) {
             }
           )
           .then(() => {
+            stopLoader();
             alert("Payment failed. Please try again or contact support.");
           })
           .catch((err) => {
+            stopLoader();
             console.error("Error:", err.message);
             alert("An error occurred. Please try again later.");
           });
       });
     })
     .catch((err) => {
+      stopLoader();
       console.error("Error:", err.message);
       alert("An error occurred. Please try again later.");
     });
+}
+
+function startLoader() {
+  const loaderDiv = document.getElementById("loaderDiv");
+  loaderDiv.style.display = "flex";
+}
+
+function stopLoader() {
+  const loaderDiv = document.getElementById("loaderDiv");
+  loaderDiv.style.display = "none";
 }

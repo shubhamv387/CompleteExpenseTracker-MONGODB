@@ -8,13 +8,13 @@ let totalExpense = 0;
 
 window.addEventListener("DOMContentLoaded", async () => {
   try {
+    startLoader();
     const userExpenseArray = await axios(
       "http://localhost:3000/expenses/generatereport",
       {
         headers: { Authorization: token },
       }
     );
-
     const welcomeText = document.getElementById("welcomeText");
     welcomeText.innerText = `Hello, ${
       userExpenseArray.data.userName.split(" ")[0]
@@ -41,14 +41,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("tableDiv").appendChild(total);
     /* DOWNLOAD REPORT START */
 
-    if (!userExpenseArray.data.isPremium) return;
+    if (!userExpenseArray.data.isPremium) {
+      stopLoader();
+      return;
+    }
+
     const response = await axios(
       "http://localhost:3000/users/expense-report-downloaded-list",
       {
         headers: { Authorization: token },
       }
     );
-
     const downloadReportDiv = document.getElementById("downloadReportDiv");
     const downloadReport = document.createElement("button");
     downloadReport.className = "btn btn-primary mb-4";
@@ -76,8 +79,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       downloadReportDiv.appendChild(a);
     });
 
+    stopLoader();
+
     downloadReport.addEventListener("click", async () => {
       try {
+        startLoader();
         const response = await axios.get(
           "http://localhost:3000/users/downloadexpensesreport",
           {
@@ -85,21 +91,23 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         );
         if (response.status === 200) {
-          console.log(response);
           var a = document.createElement("a");
           a.href = response.data.fileUrl;
           //   a.download = "myExpense.csv";
           a.click();
-          alert("Successfully Download");
+          stopLoader();
+          alert("Successfully Download!");
         }
       } catch (error) {
+        stopLoader();
         console.log(error);
         alert("Download Failed");
       }
     });
   } catch (error) {
+    stopLoader();
     console.log(error);
-    // window.location.replace("../login/login.html");
+    window.location.replace("../login/login.html");
   }
 });
 
@@ -152,4 +160,14 @@ function generateTable(table, data) {
       }
     }
   }
+}
+
+function startLoader() {
+  const loaderDiv = document.getElementById("loaderDiv");
+  loaderDiv.style.display = "flex";
+}
+
+function stopLoader() {
+  const loaderDiv = document.getElementById("loaderDiv");
+  loaderDiv.style.display = "none";
 }
