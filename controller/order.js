@@ -1,6 +1,6 @@
 const Razorpay = require("razorpay");
 const Order = require("../model/Order");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 
 exports.purchasepremium = async (req, res) => {
   const session = await mongoose.startSession();

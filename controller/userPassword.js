@@ -3,7 +3,8 @@ const ForgotPasswordRequest = require("../model/ForgotPasswordRequests");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcryptjs");
 const User = require("../model/User");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
+const path = require("path");
 
 // @desc    Sending password reset mail to User
 // @route   POST /user/password/forgotpassword
@@ -77,110 +78,11 @@ exports.createNewPassword = async (req, res, next) => {
         .status(400)
         .json({ status: "failed", message: "invalid link" });
 
-    return res.status(200).send(`<!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Create New Password</title>
-      
-          <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-          />
-        </head>
-        <body>
-          <h1
-            id="pageTitle"
-            class="text-center fs-2 mb-4 p-2 bg-dark text-white pb-3"
-          >
-            Create New Password
-          </h1>
-          <div
-            id="forgotPassDiv"
-            class="container d-flex p-4 pb-0"
-            style="max-width: 650px"
-          >
-            <!-- LOGIN FORM -->
-            <div
-              id="loginDiv"
-              class="form-control p-3 px-4"
-              style="background: #f2f2f2"
-            >
-              <form id="resetPasswordNow">
-                <label class="form-label mt-2 mb-1" for="password">Password:</label>
-                <input
-                  required
-                  class="form-control"
-                  type="password"
-                  name="password"
-                  id="password"
-                />
-      
-                <label class="form-label mt-2 mb-1" for="confirmPassword"
-                  >Confirm Password:</label
-                >
-                <input
-                  required
-                  class="form-control"
-                  type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
-                />
-      
-                <input type="submit" value="RESET PASSWORD" class="btn btn-success mt-3" />
-              </form>
-            </div>
-            <!-- FORGOT PASSWORD FORM -->
-          </div>
-      
-          <div class="container d-flex flex-column p-4 pb-0" style="max-width: 650px">
-            <p id="msg" class="p-1 px-2" style="display: none">p</p>
-            <p id="loginNow" style="display: block">
-              You can go to
-              <a
-                style="font-weight: bold"
-                href="http://localhost:3000/login/login.html"
-                >Login Page</a
-              >
-              from here.
-            </p>
-          </div>
-      
-          <script>
-            document
-              .getElementById("resetPasswordNow")
-              .addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const pass = document.getElementById("password");
-                const confirmPass = document.getElementById("confirmPassword");
-                if (pass.value !== confirmPass.value) {
-                  alert("MisMatched Passwords!");
-                  pass.value = "";
-                  confirmPass.value = "";
-                } else {
-                  try {
-                    const response = await axios.post(
-                      "http://localhost:3000/password/resetpassword/${req.params.id}",
-                      { pass: pass.value, confirmPass: confirmPass.value }
-                    );
-      
-                    alert(response.data.message);
-                    pass.value = "";
-                    confirmPass.value = "";
-                    document.getElementById("loginNow").style.display = "block";
-                  } catch (error) {
-                    alert(error.response.data.message);
-                    pass.value = "";
-                    confirmPass.value = "";
-                    console.log(error.response.data.message);
-                  }
-                }
-              });
-          </script>
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-        </body>
-      </html>`);
+    return res
+      .status(200)
+      .sendFile(
+        path.join(process.cwd(), "public/forgotpass/forgotpassword.html")
+      );
   } catch (error) {
     console.error(error);
   }
@@ -190,7 +92,6 @@ exports.createNewPassword = async (req, res, next) => {
 // @route   POST /user/password/resetpassword/:id
 // @access  Private
 exports.PostCreateNewPassword = async (req, res, next) => {
-  const { id } = req.params;
   const { pass, confirmPass } = req.body;
   const session = await mongoose.startSession();
 
@@ -201,7 +102,13 @@ exports.PostCreateNewPassword = async (req, res, next) => {
 
   try {
     session.startTransaction();
-    const FPR = await ForgotPasswordRequest.findOne({ id }); // this id is 'uuid'
+
+    const FPR = await ForgotPasswordRequest.findOne({ id: req.params.id });
+
+    if (!FPR)
+      return res
+        .status(400)
+        .json({ status: "failed", message: "invalid link" });
 
     if (!FPR.isActive) {
       return res.status(400).send({
@@ -231,7 +138,7 @@ exports.PostCreateNewPassword = async (req, res, next) => {
       .send({ status: "Success", message: "Password Updated Successfully" });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error.message.underline.red);
+    console.log("line 136", error.message.underline.red);
   } finally {
     await session.endSession();
   }

@@ -2,7 +2,7 @@ const User = require("../model/User");
 const bcrypt = require("bcryptjs");
 const { uploadeToS3 } = require("../services/S3Services");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 const Expense = require("../model/Expense");
 
 // @desc    Get All Users
