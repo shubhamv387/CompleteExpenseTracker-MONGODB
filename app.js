@@ -17,7 +17,6 @@ const orderRouter = require("./router/order");
 const app = express();
 app.use(cors());
 
-app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "public")));
