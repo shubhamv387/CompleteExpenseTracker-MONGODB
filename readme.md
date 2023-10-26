@@ -34,17 +34,13 @@
 
 ![Generate Report](https://github.com/shubhamv387/CompleteExpenseTrackerApp/assets/139668370/29a8f9d1-9fc3-4a1f-9ce5-1577857de247)
 
-### Generate Token using JWT method
+### Hashing password using Bcrypt and sending token using JWT
 
-![Generate Token](https://github.com/shubhamv387/CompleteExpenseTrackerApp/assets/139668370/d724d3e9-38d6-489b-bda1-6c4745f60287)
-
-### Hashing password using Bcrypt and sending token using above method
-
-![Bcrypt and JWT](https://github.com/shubhamv387/CompleteExpenseTrackerApp/assets/139668370/ffdf358e-1de6-48d8-8714-3e712b9ba586)
+![Bcrypt and JWT](https://github.com/shubhamv387/CompleteExpenseTracker-MONGODB/assets/139668370/2178c65b-e1cb-4189-9bb0-97dd0a2b52ae)
 
 ### Verifying token setting verified user in request object
 
-![Authenticate User](https://github.com/shubhamv387/CompleteExpenseTrackerApp/assets/139668370/7cdf4190-663f-4bf5-a2b0-749709ce848b)
+![Authenticate User](https://github.com/shubhamv387/CompleteExpenseTracker-MONGODB/assets/139668370/26186bbf-0a61-4076-94f3-fa8a4bf7d8c2)
 
 ### Pagination implementation
 

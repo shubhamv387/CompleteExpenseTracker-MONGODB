@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const Expense = require("../model/Expense");
-const User = require("../model/User");
+const mongoose = require('mongoose');
+const Expense = require('../model/Expense');
+const User = require('../model/User');
 
 // @desc    getting all expenses
 // @route   GET /expense/
@@ -14,8 +14,8 @@ exports.getAllExpenses = async (req, res, next) => {
       expenses: expenses,
     });
   } catch (error) {
-    console.log({ Error: "Something Wrong", error });
-    return res.status(400).json({ Error: "Something Wrong", error });
+    console.log({ Error: 'Something Wrong', error });
+    return res.status(400).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -25,9 +25,9 @@ exports.getAllExpenses = async (req, res, next) => {
 exports.generateReport = async (req, res, next) => {
   try {
     const expenses = await Expense.find({ userId: req.user._id })
-      .select("-_id createdAt description category amount")
+      .select('-_id createdAt description category amount')
       .sort({
-        createdAt: "DESC",
+        createdAt: 'DESC',
       });
     return res.json({
       userName: req.user.name,
@@ -35,8 +35,8 @@ exports.generateReport = async (req, res, next) => {
       expenses,
     });
   } catch (error) {
-    console.log({ Error: "Something Wrong", error });
-    return res.status(400).json({ Error: "Something Wrong", error });
+    console.log({ Error: 'Something Wrong', error });
+    return res.status(400).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -61,7 +61,7 @@ exports.addExpense = async (req, res, next) => {
     await Promise.all([
       expense.save({ session }),
       req.user.save({ session }),
-      new Error("custome error"),
+      new Error('custome error'),
     ]);
 
     // throw new Error("custome error");
@@ -71,7 +71,7 @@ exports.addExpense = async (req, res, next) => {
   } catch (error) {
     await session.abortTransaction();
     console.log(
-      "expense.js line 68".underline.red,
+      'expense.js line 68'.underline.red,
       error.message.underline.red
     );
     return res.status(400).json({ success: false, message: error.message });
@@ -156,7 +156,7 @@ exports.deleteExpense = async (req, res, next) => {
   } catch (error) {
     await session.abortTransaction();
     console.log(error.message.underline.red);
-    return res.status(400).json({ Error: "Something Wrong", error });
+    return res.status(400).json({ Error: 'Something Wrong', error });
   } finally {
     await session.endSession();
   }
@@ -168,16 +168,16 @@ exports.deleteExpense = async (req, res, next) => {
 exports.getLbUsersExpenses = async (req, res, next) => {
   try {
     const users = await User.find()
-      .select("_id name allExpenses")
-      .sort({ allExpenses: "DESC" });
+      .select('_id name allExpenses')
+      .sort({ allExpenses: 'DESC' });
 
     return res.json({
-      status: "Success",
+      status: 'Success',
       users: users,
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ Error: "Something Wrong", error });
+    return res.status(400).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -193,13 +193,13 @@ exports.getExpensePagination = async (req, res, next) => {
     const expenses = await Expense.find({ userId: req.user._id })
       .skip((page - 1) * ITEM_PER_PAGE)
       .limit(ITEM_PER_PAGE)
-      .sort({ createdAt: "DESC" });
+      .sort({ createdAt: 'DESC' });
 
     // const exps = await req.user.populate("expenses");
     // console.log(exps.expenses);
 
     return res.json({
-      status: "Success",
+      status: 'Success',
       userName: req.user.name,
       isPremium: req.user.isPremium,
       userTotalExpense: req.user.allExpenses,
@@ -213,7 +213,7 @@ exports.getExpensePagination = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ Error: "Something Wrong", error });
+    return res.status(400).json({ Error: 'Something Wrong', error });
   }
 };
 

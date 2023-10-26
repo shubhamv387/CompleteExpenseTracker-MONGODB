@@ -1,6 +1,6 @@
-const Razorpay = require("razorpay");
-const Order = require("../model/Order");
-const mongoose = require("mongoose");
+const Razorpay = require('razorpay');
+const Order = require('../model/Order');
+const mongoose = require('mongoose');
 
 exports.purchasepremium = async (req, res) => {
   const session = await mongoose.startSession();
@@ -12,13 +12,13 @@ exports.purchasepremium = async (req, res) => {
     });
     const amount = 2500;
 
-    rzp.orders.create({ amount, currency: "INR" }, async (err, order) => {
+    rzp.orders.create({ amount, currency: 'INR' }, async (err, order) => {
       if (err) {
         throw new Error(err);
       }
       const newOrder = new Order({
         orderId: order.id,
-        status: "PENDING",
+        status: 'PENDING',
         userId: req.user._id,
       });
 
@@ -53,16 +53,16 @@ exports.updateTrnasectionStatus = async (req, res, next) => {
     order.paymentId = payment_id;
 
     if (req.body.error) {
-      order.status = "FAILED";
+      order.status = 'FAILED';
       await order.save({ session });
 
       await session.commitTransaction();
       return res
         .status(200)
-        .json({ success: false, message: "Transection Failed" });
+        .json({ success: false, message: 'Transection Failed' });
     }
 
-    order.status = "SUCCESSFULL";
+    order.status = 'SUCCESSFULL';
     req.user.isPremium = true;
     req.user.orders.push(order._id);
 
@@ -75,7 +75,7 @@ exports.updateTrnasectionStatus = async (req, res, next) => {
     return res.status(200).json({
       userName: req.user.name,
       success: true,
-      message: "Transection successfull",
+      message: 'Transection successfull',
     });
   } catch (error) {
     await session.abortTransaction();
@@ -87,5 +87,5 @@ exports.updateTrnasectionStatus = async (req, res, next) => {
 };
 
 exports.getAllOrders = (req, res, next) => {
-  res.json({ message: "getting all orders" });
+  res.json({ message: 'getting all orders' });
 };

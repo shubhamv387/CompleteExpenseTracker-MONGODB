@@ -1,9 +1,9 @@
-const User = require("../model/User");
-const bcrypt = require("bcryptjs");
-const { uploadeToS3 } = require("../services/S3Services");
-const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
-const Expense = require("../model/Expense");
+const User = require('../model/User');
+const bcrypt = require('bcryptjs');
+const { uploadeToS3 } = require('../services/S3Services');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const Expense = require('../model/Expense');
 
 // @desc    Get All Users
 // @route   GET /user/allusers
@@ -26,7 +26,7 @@ exports.userSignup = async (req, res, next) => {
   try {
     session.startTransaction();
     const existingUser = await User.findOne({ email: email });
-    if (existingUser) return res.json({ message: "Email already exists!" });
+    if (existingUser) return res.json({ message: 'Email already exists!' });
 
     const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
     const user = new User({
@@ -39,14 +39,14 @@ exports.userSignup = async (req, res, next) => {
     await user.save({ session });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "30d",
+      expiresIn: '30d',
     });
 
     // throw new Error("custom error");
 
     await session.commitTransaction();
     res.status(201).json({
-      message: "User Created Successfully!",
+      message: 'User Created Successfully!',
       userDetails: {
         id: user._id,
         name: user.name,
@@ -71,7 +71,7 @@ exports.userLogin = async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ email: email });
 
-    if (!existingUser) return res.json({ message: "User does not Exists!" });
+    if (!existingUser) return res.json({ message: 'User does not Exists!' });
     else {
       const user = existingUser;
 
@@ -82,11 +82,11 @@ exports.userLogin = async (req, res, next) => {
           { userId: user._id },
           process.env.JWT_SECRET_KEY,
           {
-            expiresIn: "30d",
+            expiresIn: '30d',
           }
         );
         return res.json({
-          message: "User Logged in Successfully!",
+          message: 'User Logged in Successfully!',
           userDetails: {
             id: user._id,
             name: user.name,
@@ -95,7 +95,7 @@ exports.userLogin = async (req, res, next) => {
           },
           token,
         });
-      } else return res.json({ message: "Wrong Credentials!" });
+      } else return res.json({ message: 'Wrong Credentials!' });
     }
   } catch (err) {
     console.log(err);
@@ -106,11 +106,11 @@ exports.userLogin = async (req, res, next) => {
 // @route   POST /user/logout
 // @access  Private
 exports.logoutUser = async (req, res, next) => {
-  await res.cookie("jwt", "", {
+  await res.cookie('jwt', '', {
     expires: new Date(0),
   });
 
-  res.status(200).json({ message: "User logged out!" });
+  res.status(200).json({ message: 'User logged out!' });
 };
 
 // @desc    Get user profile
@@ -151,7 +151,7 @@ exports.updateUserProfile = async (req, res, next) => {
       });
     else
       res.json({
-        message: "not found",
+        message: 'not found',
       });
   } catch (error) {
     console.log(error);
@@ -166,7 +166,7 @@ exports.downloadExpensesReport = async (req, res, next) => {
   try {
     session.startTransaction();
     // const userExpenses = await req.user.populate("expenses");
-    const userExpenses = await Expense.find().select("-_id -userId");
+    const userExpenses = await Expense.find().select('-_id -userId');
     const fileName = `${req.user._id}/Expense${new Date().getTime()}.txt`;
 
     const data = JSON.stringify(userExpenses);
@@ -183,14 +183,14 @@ exports.downloadExpensesReport = async (req, res, next) => {
     res.status(200).json({
       success: true,
       fileUrl,
-      message: "Download Successful",
+      message: 'Download Successful',
     });
   } catch (error) {
     await session.abortTransaction();
     console.log(error.message.underline.red);
     res
       .status(500)
-      .json({ success: false, message: "Download Failed", err: error });
+      .json({ success: false, message: 'Download Failed', err: error });
   } finally {
     await session.endSession();
   }
@@ -204,7 +204,7 @@ exports.getDownloadedExpenseList = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "getting list",
+    message: 'getting list',
     expenseList: req.user.DownloadExpensesList,
   });
 };
