@@ -102,7 +102,7 @@ exports.editExpense = async (req, res, next) => {
     exp.userId = req.user._id;
 
     // saving both user and expense parallelly
-    await Promise.all([req.user.save({ session }), exp.save({ session })]);
+    await Promise.all([req.user.save(session), exp.save(session)]);
 
     // throw new Error("custom error");
 
