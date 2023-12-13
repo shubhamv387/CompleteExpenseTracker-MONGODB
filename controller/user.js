@@ -36,7 +36,7 @@ exports.userSignup = async (req, res, next) => {
       phone: phone,
     });
 
-    await user.save({ session });
+    await user.save(session);
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: '30d',
@@ -177,7 +177,7 @@ exports.downloadExpensesReport = async (req, res, next) => {
       fileUrl,
     });
 
-    await req.user.save({ session });
+    await req.user.save(session);
 
     await session.commitTransaction();
     await session.endSession();

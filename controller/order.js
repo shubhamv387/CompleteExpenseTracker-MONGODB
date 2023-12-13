@@ -22,7 +22,7 @@ exports.purchasePremium = async (req, res) => {
         userId: req.user._id,
       });
 
-      await newOrder.save({ session });
+      await newOrder.save(session);
 
       await session.commitTransaction();
       await session.endSession();
@@ -54,7 +54,7 @@ exports.updateTransactionStatus = async (req, res, next) => {
 
     if (req.body.error) {
       order.status = 'FAILED';
-      await order.save({ session });
+      await order.save(session);
 
       await session.commitTransaction();
       await session.endSession();
@@ -67,8 +67,8 @@ exports.updateTransactionStatus = async (req, res, next) => {
     req.user.isPremium = true;
     req.user.orders.push(order._id);
 
-    const updatedOrder = order.save({ session });
-    const updatedUser = req.user.save({ session });
+    const updatedOrder = order.save(session);
+    const updatedUser = req.user.save(session);
 
     await Promise.all([updatedOrder, updatedUser]);
 

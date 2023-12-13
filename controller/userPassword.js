@@ -27,7 +27,7 @@ exports.resetForgotPassword = async (req, res, next) => {
       id,
     });
 
-    await FPR.save({ session });
+    await FPR.save(session);
 
     const defaultClient = await Brevo.ApiClient.instance;
 
@@ -124,11 +124,11 @@ exports.PostCreateNewPassword = async (req, res, next) => {
     const updatedUser = User.updateOne(
       { _id: FPR.userId },
       { $set: { password: hashedPassword } },
-      { session }
+      session
     );
 
     // updating user and FPR parallelly using Promise.all
-    await Promise.all([FPR.save({ session }), updatedUser]);
+    await Promise.all([FPR.save(session), updatedUser]);
 
     // throw new Error("custome error");
 

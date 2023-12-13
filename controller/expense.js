@@ -59,8 +59,8 @@ exports.addExpense = async (req, res, next) => {
     req.user.expenses.push(expense._id);
 
     await Promise.all([
-      expense.save({ session }),
-      req.user.save({ session }),
+      expense.save(session),
+      req.user.save(session),
       // new Error('custom error'),
     ]);
 
@@ -145,8 +145,8 @@ exports.deleteExpense = async (req, res, next) => {
 
     // saving user and deleting expense parallelly using Promise.all
     await Promise.all([
-      req.user.save({ session }),
-      Expense.deleteOne({ _id: id }, { session }),
+      req.user.save(session),
+      Expense.deleteOne({ _id: id }, session),
     ]);
 
     // throw new Error("custom error");
