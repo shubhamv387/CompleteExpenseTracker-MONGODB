@@ -1,41 +1,40 @@
-const express = require("express");
-const userController = require("../controller/user");
-const authMiddleware = require("../middleware/authMiddleware");
-const isAdminMiddleware = require("../middleware/isAdmin");
-const isPremiumUser = require("../middleware/isPremium");
+const express = require('express');
+const {
+  getAllUsers,
+  userSignup,
+  userLogin,
+  downloadExpensesReport,
+  getDownloadedExpenseList,
+} = require('../controller/user');
+const { authUser } = require('../middleware/authMiddleware');
+const { isAdmin } = require('../middleware/isAdmin');
+const { isPremiumUser } = require('../middleware/isPremium');
 
 const router = express.Router();
 
-router.get(
-  "/allusers",
-  authMiddleware.authUser,
-  isAdminMiddleware.isAdmin,
-  userController.getAllUsers
-);
+router.get('/allusers', authUser, isAdmin, getAllUsers);
 
-router.post("/signup", userController.userSignup);
+router.post('/signup', userSignup);
 
-router.post("/login", userController.userLogin);
-
-// router.post("/logout", userController.logoutUser);
+router.post('/login', userLogin);
 
 // router
 //   .route("/profile")
-//   .get(authMiddleware.authUser, userController.getUserProfile)
-//   .put(authMiddleware.authUser, userController.updateUserProfile);
+//   .get(authUser, getUserProfile)
+//   .put(authUser, updateUserProfile);
 
 router.get(
-  "/downloadexpensesreport",
-  authMiddleware.authUser,
-  isPremiumUser.isPremiumUser,
-  userController.downloadExpensesReport
+  '/downloadexpensesreport',
+  authUser,
+  isPremiumUser,
+  downloadExpensesReport
 );
 
 router.get(
-  "/expense-report-downloaded-list",
-  authMiddleware.authUser,
-  isPremiumUser.isPremiumUser,
-  userController.getDownloadedExpenseList
+  '/expense-report-downloaded-list',
+  authUser,
+  isPremiumUser,
+  getDownloadedExpenseList
 );
 
 module.exports = router;

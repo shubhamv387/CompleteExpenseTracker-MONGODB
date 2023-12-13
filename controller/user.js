@@ -45,6 +45,7 @@ exports.userSignup = async (req, res, next) => {
     // throw new Error("custom error");
 
     await session.commitTransaction();
+    await session.endSession();
     res.status(201).json({
       message: 'User Created Successfully!',
       userDetails: {
@@ -57,9 +58,8 @@ exports.userSignup = async (req, res, next) => {
     });
   } catch (err) {
     await session.abortTransaction();
-    console.log(err.message.underline.red);
-  } finally {
     await session.endSession();
+    console.log(err.message.underline.red);
   }
 };
 
@@ -180,6 +180,7 @@ exports.downloadExpensesReport = async (req, res, next) => {
     await req.user.save({ session });
 
     await session.commitTransaction();
+    await session.endSession();
     res.status(200).json({
       success: true,
       fileUrl,
@@ -187,12 +188,11 @@ exports.downloadExpensesReport = async (req, res, next) => {
     });
   } catch (error) {
     await session.abortTransaction();
+    await session.endSession();
     console.log(error.message.underline.red);
     res
       .status(500)
       .json({ success: false, message: 'Download Failed', err: error });
-  } finally {
-    await session.endSession();
   }
 };
 

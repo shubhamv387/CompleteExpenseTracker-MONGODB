@@ -1,19 +1,14 @@
-const express = require("express");
-const orderController = require("../controller/order");
-const authMiddleware = require("../middleware/authMiddleware");
+const express = require('express');
+const {
+  purchasePremium,
+  updateTransactionStatus,
+} = require('../controller/order');
+const { authUser } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get(
-  "/premiummembership",
-  authMiddleware.authUser,
-  orderController.purchasepremium
-);
+router.get('/premiummembership', authUser, purchasePremium);
 
-router.post(
-  "/updatetrnasectionstatus",
-  authMiddleware.authUser,
-  orderController.updateTrnasectionStatus
-);
+router.post('/updatetrnasectionstatus', authUser, updateTransactionStatus);
 
 module.exports = router;

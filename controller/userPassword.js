@@ -56,14 +56,14 @@ exports.resetForgotPassword = async (req, res, next) => {
     });
 
     await session.commitTransaction();
+    await session.endSession();
     res
       .status(200)
       .json({ status: 'Success', message: 'email sent successfully!' });
   } catch (error) {
     await session.abortTransaction();
-    console.error(error.message.underline.red);
-  } finally {
     await session.endSession();
+    console.error(error.message.underline.red);
   }
 };
 
@@ -133,13 +133,13 @@ exports.PostCreateNewPassword = async (req, res, next) => {
     // throw new Error("custome error");
 
     await session.commitTransaction();
+    await session.endSession();
     res
       .status(200)
       .send({ status: 'Success', message: 'Password Updated Successfully' });
   } catch (error) {
     await session.abortTransaction();
-    console.log('line 136', error.message.underline.red);
-  } finally {
     await session.endSession();
+    console.log('line 136', error.message.underline.red);
   }
 };

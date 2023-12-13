@@ -15,7 +15,7 @@ exports.getAllExpenses = async (req, res, next) => {
     });
   } catch (error) {
     console.log({ Error: 'Something Wrong', error });
-    return res.status(400).json({ Error: 'Something Wrong', error });
+    return res.status(500).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -36,7 +36,7 @@ exports.generateReport = async (req, res, next) => {
     });
   } catch (error) {
     console.log({ Error: 'Something Wrong', error });
-    return res.status(400).json({ Error: 'Something Wrong', error });
+    return res.status(500).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -61,12 +61,13 @@ exports.addExpense = async (req, res, next) => {
     await Promise.all([
       expense.save({ session }),
       req.user.save({ session }),
-      new Error('custome error'),
+      // new Error('custom error'),
     ]);
 
-    // throw new Error("custome error");
+    // throw new Error("custom error");
 
     await session.commitTransaction();
+    await session.endSession();
     return res.status(200).json({ expense, isPremium: req.user.isPremium });
   } catch (error) {
     await session.abortTransaction();
@@ -74,9 +75,8 @@ exports.addExpense = async (req, res, next) => {
       'expense.js line 68'.underline.red,
       error.message.underline.red
     );
-    return res.status(400).json({ success: false, message: error.message });
-  } finally {
     await session.endSession();
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -107,6 +107,7 @@ exports.editExpense = async (req, res, next) => {
     // throw new Error("custom error");
 
     await session.commitTransaction();
+    await session.endSession();
 
     return res.status(200).json({
       _id: id,
@@ -117,10 +118,9 @@ exports.editExpense = async (req, res, next) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    console.error(error.message.underline.red);
-    return res.status(400).json({ success: false, message: error.message });
-  } finally {
     await session.endSession();
+    console.error(error.message.underline.red);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -149,16 +149,16 @@ exports.deleteExpense = async (req, res, next) => {
       Expense.deleteOne({ _id: id }, { session }),
     ]);
 
-    // throw new Error("custome error");
+    // throw new Error("custom error");
 
     await session.commitTransaction();
+    await session.endSession();
     return res.status(200).json({ expense, isPremium: req.user.isPremium });
   } catch (error) {
     await session.abortTransaction();
-    console.log(error.message.underline.red);
-    return res.status(400).json({ Error: 'Something Wrong', error });
-  } finally {
     await session.endSession();
+    console.log(error.message.underline.red);
+    return res.status(500).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -177,7 +177,7 @@ exports.getLbUsersExpenses = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ Error: 'Something Wrong', error });
+    return res.status(500).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -213,7 +213,7 @@ exports.getExpensePagination = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ Error: 'Something Wrong', error });
+    return res.status(500).json({ Error: 'Something Wrong', error });
   }
 };
 
@@ -231,6 +231,6 @@ exports.getExpensePagination = async (req, res, next) => {
 //     });
 //   } catch (error) {
 //     console.log(error);
-//     return res.status(400).json({ Error: "Something Wrong", error });
+//     return res.status(500).json({ Error: "Something Wrong", error });
 //   }
 // };

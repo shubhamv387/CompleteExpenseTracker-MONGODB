@@ -1,45 +1,32 @@
-const express = require("express");
-const expenseController = require("../controller/expense");
-const authMiddleware = require("../middleware/authMiddleware");
-const isPremium = require("../middleware/isPremium");
-
+const express = require('express');
 const router = express.Router();
 
-router.post(
-  "/add-expense",
-  authMiddleware.authUser,
-  expenseController.addExpense
-);
+const {
+  addExpense,
+  editExpense,
+  deleteExpense,
+  getLbUsersExpenses,
+  generateReport,
+  getExpensePagination,
+} = require('../controller/expense');
+const { authUser } = require('../middleware/authMiddleware');
+const isPremium = require('../middleware/isPremium');
 
-router.put(
-  "/edit-expense/:id",
-  authMiddleware.authUser,
-  expenseController.editExpense
-);
+router.post('/add-expense', authUser, addExpense);
 
-router.delete(
-  "/delete-expense/:id",
-  authMiddleware.authUser,
-  expenseController.deleteExpense
-);
+router.put('/edit-expense/:id', authUser, editExpense);
+
+router.delete('/delete-expense/:id', authUser, deleteExpense);
 
 router.get(
-  "/lb-users-expenses",
-  authMiddleware.authUser,
+  '/lb-users-expenses',
+  authUser,
   isPremium.isPremiumUser,
-  expenseController.getLbUsersExpenses
+  getLbUsersExpenses
 );
 
-router.get(
-  "/generatereport",
-  authMiddleware.authUser,
-  expenseController.generateReport
-);
+router.get('/generatereport', authUser, generateReport);
 
-router.use(
-  "/",
-  authMiddleware.authUser,
-  expenseController.getExpensePagination
-);
+router.use('/', authUser, getExpensePagination);
 
 module.exports = router;
